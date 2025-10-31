@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>EKG</title>
+    </head>
+    <body>
+        <h1>Electrocardiogram (EKG)</h1>
+        <div>
+            <div>
+                <button id="open" onclick="openSerialPort()">Open Port</button>
+                <button id="close" onclick="closeSerialPort()">Close Port</button>
+                <button id="toggle-lcd" onclick="toggleLCD()">Toggle LCD</button>
+                <label for="period">PR3</label>
+                <input type="number" min="1" max="65535" step="1" value="15624" onchange="updatePeriod(this.value)" id="period">
+                <label for="desired-freq">Desired Freq</label>
+                <input type="number" max="125000" value="16" onchange="updateSamplingFreq(this.value)" id="desired-freq">
+            </div>
+            <div>
+                <p>Actual Sampling Freq: <spain id="actual-freq">16.000</spain>Hz<br/> Current EKG reading: <span id="ekg-value">0</span>V</p>
+            </div>
+        </div>
+        <canvas id="myChart"></canvas>
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script type="text/javascript" src="plotting.js"></script>
+        <script type="text/javascript" src="serial.js"></script>
+    </body>
+</html>
