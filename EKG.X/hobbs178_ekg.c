@@ -18,7 +18,7 @@
                                        // Fail-Safe Clock Monitor is enabled)
 #pragma config FNOSC = FRCPLL      // Oscillator Select (Fast RC Oscillator with PLL module (FRCPLL))
 
-volatile int enableLCD = 0;
+// volatile int enableLCD = 0;
 
 /**
  * Configure pin AN0 as analog input
@@ -54,16 +54,17 @@ void adc_init(void) {
  */
 void __attribute__((interrupt, auto_psv)) _ADC1Interrupt(void) {
     IFS0bits.AD1IF = 0;
+    LATBbits.LATB5 = ~LATBbits.LATB5;
     
     unsigned int adcValue = ADC1BUF0; // 10-bit value
     UART_tx(adcValue & 0xff); // send LSB first
     UART_tx((adcValue >> 8) & 0b00000011); // send two most significant bits
     
-    if (enableLCD && !U1STAbits.URXDA) // important bug fix: only update display if there is no UART
-        updateDisplay(PR3, adcValue);
+    // if (enableLCD && !U1STAbits.URXDA) // important bug fix: only update display if there is no UART
+    //     updateDisplay(PR3, adcValue);
 }
 
-void updateDisplay(unsigned int period, unsigned int adcValue) {
+/*void updateDisplay(unsigned int period, unsigned int adcValue) {
     char adStr[11]; // 10 character display + 1 null terminator
     
     sprintf(adStr, "PR3: %05u", period);
@@ -73,7 +74,7 @@ void updateDisplay(unsigned int period, unsigned int adcValue) {
     sprintf(adStr, "%6.4f V", (3.3 / 1024) * adcValue);
     lcd_setCursor(0, 2);
     lcd_printStr(adStr);
-}
+}*/
 
 int main(void) {
     // Initialize PIC24
@@ -81,8 +82,12 @@ int main(void) {
     AD1PCFG = 0x9fff;
     
     // Setup display
-    lcd_setup();
-    lcd_init(42);
+    // lcd_setup();
+    // lcd_init(42);
+    
+    // Setup LED for testing
+    TRISBbits.TRISB5 = 0; // LED
+    LATBbits.LATB5 = 0;
     
     // Setup UART
     UART_init();
@@ -112,8 +117,11 @@ int main(void) {
             }
             case 0b00001100: {
                 // Toggle LCD
-                enableLCD = ~enableLCD;
-                lcd_cmd(0x01); // clear display
+                // enableLCD = ~enableLCD;
+                // lcd_cmd(0x01); // clear display
+                
+                // Toggle LED
+                // LATBbits.LATB5 = ~LATBbits.LATB5;
             }
         }
     }
