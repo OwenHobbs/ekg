@@ -1,12 +1,11 @@
+let currentEKG = 0;
 function processEKG(adcValue) {
     const ekgValue = ((3.3 / 1024) * adcValue).toFixed(2);
-    // console.log("ADC: " + adcValue + ", EKG: " + ekgValue + "V");
+    console.log("ADC: " + adcValue + ", EKG: " + ekgValue + "V");
 
     document.getElementById("ekg-value").innerText = ekgValue;
 
-    // TODO: improve
-    addData(myChart, nextLabel++, [ekgValue]);
-    shiftChart(myChart);
+    currentEKG = ekgValue;
 }
 
 async function updatePeriod(newPeriod, updateDesiredFreq = true) {
