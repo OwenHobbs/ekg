@@ -1,12 +1,90 @@
+// Averaging filter
+let ekgBufferSize = 8;
+let ekgBuffer = new Array(ekgBufferSize).fill(0);
+let ekgBufferFront = 0;
+let ekgBufferFilled = false;
+let ekgThreshold = 0.4;
+
+// Thresholding filter
+// let prevEKG = 0;
+
+let enableFilter = false;
+
 function processEKG(adcValue) {
-    const ekgValue = ((3.3 / 1024) * adcValue).toFixed(2);
-    // console.log("ADC: " + adcValue + ", EKG: " + ekgValue + "V");
+    const ekgValue = ((3.3 / 1024) * adcValue);
 
-    document.getElementById("ekg-value").innerText = ekgValue;
+    // Update information
+    console.log("ADC: " + adcValue + ", EKG: " + ekgValue.toFixed(2) + "V");
+    document.getElementById("ekg-value").innerText = ekgValue.toFixed(2);
 
-    // TODO: improve
-    addData(myChart, nextLabel++, [ekgValue]);
-    shiftChart(myChart);
+    let plotValue = -1;
+
+    // Averaging filter
+    if (enableFilter) {
+        if (ekgBufferFilled) {
+            let prevAverageEKG = averageEKG();
+
+            // Update information
+            console.log("Average over " + ekgBufferSize + " samples: " + prevAverageEKG.toFixed(2) + "V");
+            document.getElementById("buffer-size").innerText = ekgBufferSize;
+            document.getElementById("buffer-average").innerText = prevAverageEKG.toFixed(2);
+            
+            // Check threshold
+            if (Math.abs(ekgValue - prevAverageEKG) < ekgThreshold) {
+                // Append to circular buffer
+                ekgBuffer[ekgBufferFront] = ekgValue;
+                ekgBufferFront = (ekgBufferFront + 1) % ekgBufferSize;
+                // Plot new average
+                plotValue = averageEKG();
+            } else {
+                // Directly plot the spike in value
+                plotValue = ekgValue;
+            }
+        } else {
+            // Append to circular buffer
+            ekgBuffer[ekgBufferFront] = ekgValue;
+            ekgBufferFront = (ekgBufferFront + 1) % ekgBufferSize;
+            //  Once buffer is full set true
+            if (ekgBufferFront == 0)
+                ekgBufferFilled = true;
+            // Do not plot
+        }
+    } else {
+        // Directly plot the ekg value bypassing filter
+        plotValue = ekgValue;
+    }
+
+    /*
+    // Thresholding filter
+    if (enableFilter) {
+        if (Math.abs(ekgValue - prevEKG) < 0.20) {
+            plotValue = prevEKG;
+        } else {
+            plotValue = ekgValue;
+            prevEKG = ekgValue;
+        }
+    } else {
+        plotValue = ekgValue;
+    }
+    */
+
+    if (plotValue != -1) {
+        // TODO: improve
+        addData(myChart, nextLabel++, [plotValue]);
+        shiftChart(myChart);
+    }
+}
+
+function toggleFilter() {
+    enableFilter = !enableFilter;
+}
+
+function averageEKG() {
+    let sum = 0;
+    for (let i = 0; i < ekgBufferSize; i++) {
+        sum += ekgBuffer[i];
+    }
+    return sum / ekgBufferSize;
 }
 
 async function updatePeriod(newPeriod, updateDesiredFreq = true) {
